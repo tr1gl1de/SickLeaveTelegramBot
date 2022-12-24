@@ -37,6 +37,9 @@ public class UpdateHandler : IUpdateHandler
         var action = messageText.Split(' ')[0] switch
         {
             "/start" => _commandHandler.StartSendPoll(message, cancellationToken),
+            "/stop" => _commandHandler.StopSendPoll(message),
+            "/poll_now" => _commandHandler.SendSicknessPollReport(message, cancellationToken),
+            _ => new Task<Message>(() => message)
             
         };
         var sentMessage = await action;
