@@ -18,14 +18,21 @@ public class UpdateHandler : IUpdateHandler
 
     public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
-        var handler = update switch
+        try
         {
-            { Message: { } message }                       => BotOnMessageReceived(message, cancellationToken),
-            { EditedMessage: { } message }                 => BotOnMessageReceived(message, cancellationToken),
-            _ => throw new ArgumentOutOfRangeException(nameof(update), update, null)
-        };
+            var handler = update switch
+            {
+                { Message: { } message } => BotOnMessageReceived(message, cancellationToken),
+                { EditedMessage: { } message } => BotOnMessageReceived(message, cancellationToken),
+                _ => throw new ArgumentOutOfRangeException(nameof(update), update, null)
+            };
 
-        await handler;
+            await handler;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError($"{e}");
+        }
     }
 
     private async Task BotOnMessageReceived(Message message, CancellationToken cancellationToken)
@@ -36,8 +43,8 @@ public class UpdateHandler : IUpdateHandler
 
         var action = messageText.Split(' ')[0] switch
         {
-            "/start" => _commandHandler.StartSendPoll(message, cancellationToken),
-            "/stop" => _commandHandler.StopSendPoll(message),
+            "/start_polling" => _commandHandler.StartSendPoll(message, cancellationToken),
+            "/stop_polling" => _commandHandler.StopSendPoll(message),
             "/poll_now" => _commandHandler.SendSicknessPollReport(message, cancellationToken),
             _ => new Task<Message>(() => message)
             

@@ -7,9 +7,10 @@ namespace SickLeaveTelegramBot.App.Services;
 public class TgCommandHandler
 {
     private readonly ITelegramBotClient _botClient;
-    private const string CronTimer10 = "*/10 * * * * *";
-    private const string CronTimer30 = "*/30 * * * * *";
+    private const int FirstDay = 15;
+    private const int LastDay = 28;
     private readonly ILogger<TgCommandHandler> _logger;
+    private readonly Dictionary<string, int> _dayDiffs = new();
 
     public TgCommandHandler(ITelegramBotClient botClient, ILogger<TgCommandHandler> logger)
     {
@@ -17,44 +18,59 @@ public class TgCommandHandler
         _logger = logger;
     }
 
-    public async Task<Message> SendSicknessPollReport(Message message, CancellationToken cancellationToken)
+    public Task<Message> SendSicknessPollReport(Message message, CancellationToken cancellationToken)
     {
         _logger.LogInformation($"Send message with id {message.MessageId}");
-        return await _botClient.SendPollAsync(
+        var result = _botClient.SendPollAsync(
             chatId: message.Chat.Id,
-            question: "Да или нет ?",
+            question: "Вы брали больничный?",
             isAnonymous: false,
             options: new[]
             {
                 "Да",
                 "Нет"
             },
-            cancellationToken: cancellationToken).WaitAsync(cancellationToken);
-    }
-
-    public async Task<Message> SendDice(Message message, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation($"Send message with id {message.MessageId}");
-        return await _botClient.SendDiceAsync(
-            chatId: message.Chat.Id,
-            cancellationToken: cancellationToken).WaitAsync(cancellationToken);
+            cancellationToken: cancellationToken);
+        result.Wait(cancellationToken);
+        return result;
     }
 
     public Task<Message> StartSendPoll(Message message, CancellationToken cancellationToken)
     {
+        var firstJobId = message.Chat.Id;
+        var secondJobId = message.Chat.Id + 1;
+        
+        var dayDiff = 0;
+        if (message.Text != null)
+        {
+            if (message.Text.Split(' ').Length > 1)
+            {
+                int.TryParse(message.Text.Split(' ')[1], out dayDiff);
+                if (dayDiff > 14) dayDiff = 0;
+            }
+        }
+
+        _dayDiffs.TryAdd(firstJobId.ToString(), dayDiff);
+        _dayDiffs.TryAdd(secondJobId.ToString(), dayDiff);
+        
         RecurringJob.AddOrUpdate($"{message.Chat.Id}",
               () => SendSicknessPollReport(
                 message,
                 cancellationToken),
-            CronTimer10
+            $"17 11 {FirstDay - _dayDiffs[firstJobId.ToString()]} * *",
+              TimeZoneInfo.Local
         );
+        
         RecurringJob.AddOrUpdate($"{message.Chat.Id+1}",
-            () => SendDice(
+            () => SendSicknessPollReport(
                 message,
                 cancellationToken),
-            CronTimer30
+            $"17 11 {LastDay - _dayDiffs[secondJobId.ToString()]} * *",
+            TimeZoneInfo.Local
         );
-        _logger.LogInformation($"Start job with id -> {message.Chat.Id}");
+        
+        _logger.LogInformation($"Start job with id -> {firstJobId}");
+        _logger.LogInformation($"Start job with id -> {secondJobId}");
         return Task.FromResult(message);
     }
 
@@ -63,6 +79,8 @@ public class TgCommandHandler
         RecurringJob.RemoveIfExists($"{message.Chat.Id}");
         RecurringJob.RemoveIfExists($"{message.Chat.Id+1}");
         _logger.LogInformation($"Stop job with id -> {message.Chat.Id}");
+        _logger.LogInformation($"Stop job with id -> {message.Chat.Id+1}");
+
         return Task.FromResult(message);
     }
 }
