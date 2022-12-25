@@ -67,6 +67,7 @@ public class UpdateHandler : IUpdateHandler
             "/start_polling" => _commandHandler.StartSendPoll(message, cancellationToken),
             "/stop_polling" => _commandHandler.StopSendPoll(message),
             "/poll_now" => _commandHandler.SendSicknessPollReportAsync(message, cancellationToken),
+            "/usage" => _commandHandler.SendUsageMessageAsync(message, cancellationToken),
             _ => _commandHandler.UnknownCommand(message, cancellationToken)
             
         };

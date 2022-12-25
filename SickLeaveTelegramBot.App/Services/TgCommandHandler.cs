@@ -72,7 +72,7 @@ public class TgCommandHandler
         );
         RecurringJob.AddOrUpdate($"{message.Chat.Id+1}",
             () => SendSicknessPollReport(message, cancellationToken),
-            $"17 11 {FirstDay - _dayDiffs[firstJobId.ToString()]} * *",
+            $"17 11 {LastDay - _dayDiffs[firstJobId.ToString()]} * *",
             TimeZoneInfo.Local
         );
         
@@ -94,5 +94,23 @@ public class TgCommandHandler
     public Task<Message> UnknownCommand(Message message, CancellationToken cancellationToken)
     {
         return Task.FromResult(message);
+    }
+
+    public async Task<Message> SendUsageMessageAsync(Message message, CancellationToken cancellationToken)
+    {
+        const string usage = """
+            Команды для работы с ботом
+            /start_polling - запустить отправку опроса по таймеру
+            /start_polling dayDiff - вместо dayDiff указать разницу по дням для опроса , но неболее 14 дней. К примеру /start_polling 4 запустит порос раньше на 4 дня
+            /stop_polling - выключает опрос по таймеру
+            /poll_now - отправляет опрос сейчас
+            /usage - показывает справку о командах
+            """;
+        
+        _logger.LogInformation($"Send message with id {message.MessageId}");
+        return await _botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: usage,
+            cancellationToken: cancellationToken);
     }
 }
