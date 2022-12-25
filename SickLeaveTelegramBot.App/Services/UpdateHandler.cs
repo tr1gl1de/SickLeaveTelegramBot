@@ -2,6 +2,7 @@ using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace SickLeaveTelegramBot.App.Services;
 
@@ -20,14 +21,14 @@ public class UpdateHandler : IUpdateHandler
     {
         try
         {
-            var handler = update switch
+            var state = update.Message switch
             {
-                { Message: { } message } => BotOnMessageReceived(message, cancellationToken),
-                { EditedMessage: { } message } => BotOnMessageReceived(message, cancellationToken),
-                _ => throw new ArgumentOutOfRangeException(nameof(update), update, null)
+                { Chat.Type: ChatType.Private } => UpdateResolverAsync(update, cancellationToken),
+                { From: not null }  => AdminUpdateResolverAsync(botClient ,update, cancellationToken),
+                _ => UnknownUpdateHandlerAsync(update)
             };
-
-            await handler;
+            
+            await state;
         }
         catch (Exception e)
         {
@@ -35,7 +36,27 @@ public class UpdateHandler : IUpdateHandler
         }
     }
 
-    private async Task BotOnMessageReceived(Message message, CancellationToken cancellationToken)
+    private async Task UpdateResolverAsync(Update update, CancellationToken cancellationToken)
+    {
+        var handler = update switch
+        {
+            { Message: { } message } => BotOnMessageReceivedAsync(message, cancellationToken),
+            { EditedMessage: { } message } => BotOnMessageReceivedAsync(message, cancellationToken),
+            _ => UnknownUpdateHandlerAsync(update)
+        };
+       await handler;
+    }
+
+    private async Task AdminUpdateResolverAsync(ITelegramBotClient botClient ,Update update, CancellationToken cancellationToken)
+    {
+        var currentUserMessage = update.Message.From.Id;
+        var userMessage =await botClient.GetChatAdministratorsAsync(update.Message.Chat.Id,cancellationToken);
+
+        if (userMessage.Select(x => x.User.Id).Contains(currentUserMessage))
+            await UpdateResolverAsync(update, cancellationToken);
+    }
+
+    private async Task BotOnMessageReceivedAsync(Message message, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Receive message type: {MessageType}", message.Type);
         if (message.Text is not { } messageText)
@@ -45,8 +66,8 @@ public class UpdateHandler : IUpdateHandler
         {
             "/start_polling" => _commandHandler.StartSendPoll(message, cancellationToken),
             "/stop_polling" => _commandHandler.StopSendPoll(message),
-            "/poll_now" => _commandHandler.SendSicknessPollReport(message, cancellationToken),
-            _ => new Task<Message>(() => message)
+            "/poll_now" => _commandHandler.SendSicknessPollReportAsync(message, cancellationToken),
+            _ => _commandHandler.UnknownCommand(message, cancellationToken)
             
         };
         var sentMessage = await action;
@@ -66,5 +87,11 @@ public class UpdateHandler : IUpdateHandler
         // Cooldown in case of network connection error
         if (exception is RequestException)
             await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+    }
+    
+    private Task UnknownUpdateHandlerAsync(Update update)
+    {
+        _logger.LogInformation("Unknown update type: {UpdateType}", update.Type);
+        return Task.CompletedTask;
     }
 }

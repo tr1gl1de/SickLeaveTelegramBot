@@ -18,10 +18,10 @@ public class TgCommandHandler
         _logger = logger;
     }
 
-    public Task<Message> SendSicknessPollReport(Message message, CancellationToken cancellationToken)
+    public async Task<Message> SendSicknessPollReportAsync(Message message, CancellationToken cancellationToken)
     {
         _logger.LogInformation($"Send message with id {message.MessageId}");
-        var result = _botClient.SendPollAsync(
+        return await _botClient.SendPollAsync(
             chatId: message.Chat.Id,
             question: "Вы брали больничный?",
             isAnonymous: false,
@@ -31,8 +31,20 @@ public class TgCommandHandler
                 "Нет"
             },
             cancellationToken: cancellationToken);
-        result.Wait(cancellationToken);
-        return result;
+    }
+
+    public Message SendCurrentTime(Message message, CancellationToken cancellationToken, int jobNum = 0)
+    {
+        _logger.LogInformation($"Send message with id {message.MessageId}");
+        return _botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"Job num -> {jobNum} [{DateTime.Now}]",
+            cancellationToken: cancellationToken).Result;
+    }
+    
+    public Message SendSicknessPollReport(Message message, CancellationToken cancellationToken)
+    {
+        return SendSicknessPollReportAsync(message, cancellationToken).Result;
     }
 
     public Task<Message> StartSendPoll(Message message, CancellationToken cancellationToken)
@@ -54,18 +66,13 @@ public class TgCommandHandler
         _dayDiffs.TryAdd(secondJobId.ToString(), dayDiff);
         
         RecurringJob.AddOrUpdate($"{message.Chat.Id}",
-              () => SendSicknessPollReport(
-                message,
-                cancellationToken),
+            () => SendSicknessPollReport(message, cancellationToken),
             $"17 11 {FirstDay - _dayDiffs[firstJobId.ToString()]} * *",
-              TimeZoneInfo.Local
+            TimeZoneInfo.Local
         );
-        
         RecurringJob.AddOrUpdate($"{message.Chat.Id+1}",
-            () => SendSicknessPollReport(
-                message,
-                cancellationToken),
-            $"17 11 {LastDay - _dayDiffs[secondJobId.ToString()]} * *",
+            () => SendSicknessPollReport(message, cancellationToken),
+            $"17 11 {FirstDay - _dayDiffs[firstJobId.ToString()]} * *",
             TimeZoneInfo.Local
         );
         
@@ -81,6 +88,11 @@ public class TgCommandHandler
         _logger.LogInformation($"Stop job with id -> {message.Chat.Id}");
         _logger.LogInformation($"Stop job with id -> {message.Chat.Id+1}");
 
+        return Task.FromResult(message);
+    }
+
+    public Task<Message> UnknownCommand(Message message, CancellationToken cancellationToken)
+    {
         return Task.FromResult(message);
     }
 }
