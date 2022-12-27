@@ -64,7 +64,7 @@ public class UpdateHandler : IUpdateHandler
 
         var action = messageText.Split(' ')[0] switch
         {
-            "/start" => _commandHandler.StartSendPoll(message, cancellationToken),
+            "/start" => _commandHandler.SendStartMessageAsync(message, cancellationToken),
             "/start_polling" => _commandHandler.StartSendPoll(message, cancellationToken),
             "/stop_polling" => _commandHandler.StopSendPoll(message),
             "/poll_now" => _commandHandler.SendSicknessPollReportAsync(message, cancellationToken),
