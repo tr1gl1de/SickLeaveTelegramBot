@@ -18,12 +18,12 @@ public class TgCommandHandler
         _logger = logger;
     }
 
-    public async Task<Message> SendSicknessPollReportAsync(Message message, CancellationToken cancellationToken)
+    public async Task<Message> SendNowSicknessPollReportAsync(Message message, CancellationToken cancellationToken)
     {
         _logger.LogInformation($"Send message with id {message.MessageId}");
         return await _botClient.SendPollAsync(
             chatId: message.Chat.Id,
-            question: "Вы брали больничный?",
+            question: "Брали ли вы больничный ?",
             isAnonymous: false,
             options: new[]
             {
@@ -33,9 +33,44 @@ public class TgCommandHandler
             cancellationToken: cancellationToken);
     }
 
-    public Message SendSicknessPollReport(Message message, CancellationToken cancellationToken)
+    private async Task<Message> SendSicknessPollReportFirstHalfAsync(Message message, CancellationToken cancellationToken)
     {
-        return SendSicknessPollReportAsync(message, cancellationToken).Result;
+        _logger.LogInformation($"Send message with id {message.MessageId}");
+        return await _botClient.SendPollAsync(
+            chatId: message.Chat.Id,
+            question: "Брали ли вы больничный с 1 по 15 число?",
+            isAnonymous: false,
+            options: new[]
+            {
+                "Да",
+                "Нет"
+            },
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task<Message> SendSicknessPollReportLastHalfAsync(Message message, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation($"Send message with id {message.MessageId}");
+        return await _botClient.SendPollAsync(
+            chatId: message.Chat.Id,
+            question: "Брали ли вы больничный с 16 числа по конец месяца?",
+            isAnonymous: false,
+            options: new[]
+            {
+                "Да",
+                "Нет"
+            },
+            cancellationToken: cancellationToken);
+    }
+
+    private Message SendSicknessPollReportFirstHalf(Message message, CancellationToken cancellationToken)
+    {
+        return SendSicknessPollReportFirstHalfAsync(message, cancellationToken).Result;
+    }
+    
+    private Message SendSicknessPollReportLastHalf(Message message, CancellationToken cancellationToken)
+    {
+        return SendSicknessPollReportLastHalfAsync(message, cancellationToken).Result;
     }
 
     public Task<Message> StartSendPoll(Message message, CancellationToken cancellationToken)
@@ -58,13 +93,14 @@ public class TgCommandHandler
         _dayDiffs.TryAdd(secondJobId.ToString(), dayDiff);
         
         RecurringJob.AddOrUpdate($"{message.Chat.Id}",
-            () => SendSicknessPollReport(message, cancellationToken),
+            () => SendSicknessPollReportFirstHalf(message, cancellationToken),
             $"17 11 {FirstDay - _dayDiffs[firstJobId.ToString()]} * *",
             TimeZoneInfo.Local
         );
+        
         RecurringJob.AddOrUpdate($"{message.Chat.Id+1}",
-            () => SendSicknessPollReport(message, cancellationToken),
-            $"17 11 {LastDay - _dayDiffs[firstJobId.ToString()]} * *",
+            () => SendSicknessPollReportLastHalf(message, cancellationToken),
+            $"17 11 {LastDay - _dayDiffs[secondJobId.ToString()]} * *",
             TimeZoneInfo.Local
         );
         
