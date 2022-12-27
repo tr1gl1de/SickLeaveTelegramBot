@@ -102,12 +102,11 @@ public class TgCommandHandler
         const string usage = """
             Команды для работы с ботом
             /start_polling - запустить отправку опроса по таймеру
-            /start_polling dayDiff - вместо dayDiff указать разницу по дням для опроса , но неболее 14 дней. К примеру /start_polling 4 запустит порос раньше на 4 дня
+            /start_polling __dayDiff__ - вместо __dayDiff__ указать разницу по дням для опроса , но не более 14 дней. К примеру, /start_polling 4 запустит опрос раньше на 4 дня
             /stop_polling - выключает опрос по таймеру
             /poll_now - отправляет опрос сейчас
-            /usage - показывает справку о командах
+            /help - показывает справку о командах
             """;
-        
         _logger.LogInformation($"Send message with id {message.MessageId}");
         return await _botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
