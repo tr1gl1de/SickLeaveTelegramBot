@@ -1,6 +1,7 @@
 ﻿using Hangfire;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace SickLeaveTelegramBot.App.Services;
 
@@ -128,6 +129,7 @@ public class TgCommandHandler
     {
         _logger.LogInformation($"Send message with id {message.MessageId}");
         return await _botClient.SendTextMessageAsync(
+            parseMode:ParseMode.MarkdownV2,
             chatId: message.Chat.Id,
             text: ProjectConstants.UsageText,
             cancellationToken: cancellationToken);
@@ -137,6 +139,7 @@ public class TgCommandHandler
     {
         _logger.LogInformation($"Send message with id {message.MessageId}");
         return await _botClient.SendTextMessageAsync(
+            parseMode: ParseMode.MarkdownV2,
             chatId: message.Chat.Id,
             text: ProjectConstants.StartText,
             cancellationToken: cancellationToken);
