@@ -33,15 +33,6 @@ public class TgCommandHandler
             cancellationToken: cancellationToken);
     }
 
-    public Message SendCurrentTime(Message message, CancellationToken cancellationToken, int jobNum = 0)
-    {
-        _logger.LogInformation($"Send message with id {message.MessageId}");
-        return _botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: $"Job num -> {jobNum} [{DateTime.Now}]",
-            cancellationToken: cancellationToken).Result;
-    }
-    
     public Message SendSicknessPollReport(Message message, CancellationToken cancellationToken)
     {
         return SendSicknessPollReportAsync(message, cancellationToken).Result;
@@ -99,18 +90,19 @@ public class TgCommandHandler
 
     public async Task<Message> SendUsageMessageAsync(Message message, CancellationToken cancellationToken)
     {
-        const string usage = """
-            Команды для работы с ботом
-            /start_polling - запустить отправку опроса по таймеру
-            /start_polling __dayDiff__ - вместо __dayDiff__ указать разницу по дням для опроса , но не более 14 дней. К примеру, /start_polling 4 запустит опрос раньше на 4 дня
-            /stop_polling - выключает опрос по таймеру
-            /poll_now - отправляет опрос сейчас
-            /help - показывает справку о командах
-            """;
         _logger.LogInformation($"Send message with id {message.MessageId}");
         return await _botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: usage,
+            text: ProjectConstants.UsageText,
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task<Message> SendStartMessageAsync(Message message, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation($"Send message with id {message.MessageId}");
+        return await _botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: ProjectConstants.StartText,
             cancellationToken: cancellationToken);
     }
 }
