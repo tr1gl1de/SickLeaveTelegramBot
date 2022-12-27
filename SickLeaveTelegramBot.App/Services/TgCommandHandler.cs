@@ -58,6 +58,7 @@ public class TgCommandHandler
             if (message.Text.Split(' ').Length > 1)
             {
                 int.TryParse(message.Text.Split(' ')[1], out dayDiff);
+                if (dayDiff < 0) dayDiff = 0;
                 if (dayDiff > 14) dayDiff = 0;
             }
         }
