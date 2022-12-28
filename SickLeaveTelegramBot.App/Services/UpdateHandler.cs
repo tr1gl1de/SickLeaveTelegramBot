@@ -24,7 +24,7 @@ public class UpdateHandler : IUpdateHandler
             var state = update.Message switch
             {
                 { Chat.Type: ChatType.Private } => UpdateResolverAsync(update, cancellationToken),
-                { From: not null }  => AdminUpdateResolverAsync(botClient ,update, cancellationToken),
+                { From: not null }  => AdminOrOwnerUpdateResolverAsync(botClient ,update, cancellationToken),
                 _ => UnknownUpdateHandlerAsync(update)
             };
             
@@ -47,7 +47,7 @@ public class UpdateHandler : IUpdateHandler
        await handler;
     }
 
-    private async Task AdminUpdateResolverAsync(ITelegramBotClient botClient ,Update update, CancellationToken cancellationToken)
+    private async Task AdminOrOwnerUpdateResolverAsync(ITelegramBotClient botClient ,Update update, CancellationToken cancellationToken)
     {
         var currentUserMessage = update.Message.From.Id;
         var userMessage =await botClient.GetChatAdministratorsAsync(update.Message.Chat.Id,cancellationToken);
