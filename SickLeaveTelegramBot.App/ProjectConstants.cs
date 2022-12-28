@@ -12,8 +12,6 @@ public static class ProjectConstants
 """;
 
     public const string StartText = """
-/start
-
 Привет!
 Я бот, который помогает менеджерам команды автоматизировать опросники сотрудников о больничных.
 
