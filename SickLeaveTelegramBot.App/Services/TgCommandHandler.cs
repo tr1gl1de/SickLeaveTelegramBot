@@ -142,4 +142,13 @@ public class TgCommandHandler
             text: ProjectConstants.StartText,
             cancellationToken: cancellationToken);
     }
+
+    public async Task<Message> SendUserIdMessageAsync(Message message, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation($"Send message with id {message.MessageId}");
+        return await _botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"Your id -> {message.From.Id}",
+            cancellationToken: cancellationToken);
+    }
 }
