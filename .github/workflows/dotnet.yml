@@ -22,4 +22,4 @@ jobs:
       - name: upload docker image
         run: sshpass -p ${{ secrets.Password }} scp docker-image.tar ${{ secrets.Host }}:/home/max/tg-bot/docker-image.tar
       - name: load image and start
-        run: sshpass -p ${{ secrets.Password }} ssh ${{ secrets.Host }} "cd /home/max/tg-bot && echo ${{ secrets.Password }} | sudo -S docker load -i docker-image.tar && echo ${{ secrets.Password }} | sudo -S sudo docker run -e "BotConfiguration__BotToken=${{ secrets.BOTCONFIGURATION__BOTTOKEN }}" tg-bot"
+        run: sshpass -p ${{ secrets.Password }} ssh ${{ secrets.Host }} "cd /home/max/tg-bot && echo ${{ secrets.Password }} | sudo -S docker load -i docker-image.tar && echo ${{ secrets.Password }} | sudo -S sudo docker run -d -e "BotConfiguration__BotToken=${{ secrets.BOTCONFIGURATION__BOTTOKEN }}" tg-bot"
