@@ -1,5 +1,5 @@
 #  TG BOT для опроса по крону
-* Перед запуском заменить указать ваш токен бота из BotFather
+* Перед запуском заменить указать ваш токен бота  из BotFather
 ```json
   "BotConfiguration" : {
     "BotToken": "BOT_TOKEN"
