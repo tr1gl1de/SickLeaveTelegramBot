@@ -18,9 +18,6 @@ jobs:
       - name: Deploy
         run:
           - apt-get install sshpass
-          - sshpass -p ${{ secrets.Password }} ssh -o "StrictHostKeyChecking=no" ${{ secrets.Host }} "cd /home/max/tg-bot; \
-            ${{ secrets.Password }} | sudo -S docker stop tg-bot:latest; rm docker-image.tar" || true
+          - sshpass -p ${{ secrets.Password }} ssh -o "StrictHostKeyChecking=no" ${{ secrets.Host }} "cd /home/max/tg-bot; ${{ secrets.Password }} | sudo -S docker stop tg-bot:latest; rm docker-image.tar" || true
           - sshpass -p ${{ secrets.Password }} scp docker-image.tar ${{ secrets.Host }}:/home/max/tg-bot/docker-image.tar
-          - sshpass -p ${{ secrets.Password }} ssh ${{ secrets.Host }} "cd /home/max/tg-bot &&
-            echo ${{ secrets.Password }} | sudo -S docker load -i docker-image.tar &&
-            echo ${{ secrets.Password }} | sudo -S sudo docker run -e "BotConfiguration__BotToken=${{ secrets.BOTCONFIGURATION__BOTTOKEN }}" tg-bot"
+          - sshpass -p ${{ secrets.Password }} ssh ${{ secrets.Host }} "cd /home/max/tg-bot && echo ${{ secrets.Password }} | sudo -S docker load -i docker-image.tar && echo ${{ secrets.Password }} | sudo -S sudo docker run -e "BotConfiguration__BotToken=${{ secrets.BOTCONFIGURATION__BOTTOKEN }}" tg-bot"
