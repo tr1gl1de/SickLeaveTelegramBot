@@ -16,9 +16,9 @@ jobs:
       - name: Save image
         run: docker save tg-bot:latest -o docker-image.tar
       - name: install sshpass
-        run: apt-get install sshpass
+        run: echo ${{ secrets.Password }} sudo -S apt-get install sshpass
       - name: stop and remove old container
-        run: sshpass -p ${{ secrets.Password }} ssh -o "StrictHostKeyChecking=no" ${{ secrets.Host }} "cd /home/max/tg-bot; ${{ secrets.Password }} | sudo -S docker stop tg-bot:latest; rm docker-image.tar" || true
+        run: sshpass -p ${{ secrets.Password }} ssh -o "StrictHostKeyChecking=no" ${{ secrets.Host }} "cd /home/max/tg-bot; echo ${{ secrets.Password }} | sudo -S docker stop tg-bot:latest; rm docker-image.tar" || true
       - name: upload docker image
         run: sshpass -p ${{ secrets.Password }} scp docker-image.tar ${{ secrets.Host }}:/home/max/tg-bot/docker-image.tar
       - name: load image and start
