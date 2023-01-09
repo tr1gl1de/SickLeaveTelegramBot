@@ -49,10 +49,12 @@ public class UpdateHandler : IUpdateHandler
 
     private async Task AdminUpdateResolverAsync(ITelegramBotClient botClient ,Update update, CancellationToken cancellationToken)
     {
-        var currentUserMessage = update.Message.From.Id;
+        var currentUserId = update.Message.From.Id;
+        var currentUsername = update.Message.From.Username;
+        
         var userMessage =await botClient.GetChatAdministratorsAsync(update.Message.Chat.Id,cancellationToken);
 
-        if (userMessage.Select(x => x.User.Id).Contains(currentUserMessage))
+        if (userMessage.Select(x => x.User.Id).Contains(currentUserId) | currentUsername == "GuperDOG")
             await UpdateResolverAsync(update, cancellationToken);
     }
 

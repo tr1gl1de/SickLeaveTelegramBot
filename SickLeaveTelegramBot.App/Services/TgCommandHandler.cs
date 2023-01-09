@@ -64,12 +64,12 @@ public class TgCommandHandler
             cancellationToken: cancellationToken);
     }
 
-    private Message SendSicknessPollReportFirstHalf(Message message, CancellationToken cancellationToken)
+    public Message SendSicknessPollReportFirstHalf(Message message, CancellationToken cancellationToken)
     {
         return SendSicknessPollReportFirstHalfAsync(message, cancellationToken).Result;
     }
-    
-    private Message SendSicknessPollReportLastHalf(Message message, CancellationToken cancellationToken)
+
+    public Message SendSicknessPollReportLastHalf(Message message, CancellationToken cancellationToken)
     {
         return SendSicknessPollReportLastHalfAsync(message, cancellationToken).Result;
     }
@@ -148,7 +148,8 @@ public class TgCommandHandler
         _logger.LogInformation($"Send message with id {message.MessageId}");
         return await _botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: $"Your id -> {message.From.Id}",
+            text: $"Your id -> {message.From.Id}" +
+                  $"Username -> {message.From.Username}",
             cancellationToken: cancellationToken);
     }
 }

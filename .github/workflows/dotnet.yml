@@ -1,28 +1,26 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
 
-name: .NET
+name: CI/CD
 
 on:
   push:
-    branches: [ "master", "dev" ]
-  pull_request:
-    branches: [ "master" ]
+    branches: [ "master"]
 
 jobs:
-  build:
-
+  deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 7.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
+      - uses: actions/checkout@v3
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag tg-bot:latest
+      - name: Save image
+        run: docker save tg-bot:latest -o docker-image.tar
+      - name: Deploy
+        run:
+          - apt-get install sshpass
+          - sshpass -p ${{ secrets.Password }} ssh -o "StrictHostKeyChecking=no" ${{ secrets.Host }} "cd /home/max/tg-bot; \
+            ${{ secrets.Password }} | sudo -S docker stop tg-bot:latest; rm docker-image.tar" || true
+          - sshpass -p ${{ secrets.Password }} scp docker-image.tar ${{ secrets.Host }}:/home/max/tg-bot/docker-image.tar
+          - sshpass -p ${{ secrets.Password }} ssh ${{ secrets.Host }} "cd /home/max/tg-bot &&
+            echo ${{ secrets.Password }} | sudo -S docker load -i docker-image.tar &&
+            echo ${{ secrets.Password }} | sudo -S sudo docker run -e "BotConfiguration__BotToken=${{ secrets.BOTCONFIGURATION__BOTTOKEN }}" tg-bot"

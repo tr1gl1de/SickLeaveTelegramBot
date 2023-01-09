@@ -1,18 +1,13 @@
-﻿FROM mcr.microsoft.com/dotnet/runtime:7.0 AS base
-WORKDIR /app
-
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+﻿FROM mcr.microsoft.com/dotnet/sdk:7.0 as build
 WORKDIR /src
-COPY ["SickLeaveTelegramBot.App/SickLeaveTelegramBot.App.csproj", "SickLeaveTelegramBot.App/"]
-RUN dotnet restore "SickLeaveTelegramBot.App/SickLeaveTelegramBot.App.csproj"
+ENV BotConfiguration__BotToken ""
+
+COPY *.csproj .
+RUN dotnet restore
 COPY . .
-WORKDIR "/src/SickLeaveTelegramBot.App"
-RUN dotnet build "SickLeaveTelegramBot.App.csproj" -c Release -o /app/build
+RUN dotnet publish -c Release -o /publish
 
-FROM build AS publish
-RUN dotnet publish "SickLeaveTelegramBot.App.csproj" -c Release -o /app/publish
-
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/aspnet:7.0 as runtime
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /publish .
 ENTRYPOINT ["dotnet", "SickLeaveTelegramBot.App.dll"]
